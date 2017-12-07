@@ -56,13 +56,8 @@ public class RobotSoftware extends RobotHardware
 		armAngle = armAngleNoOffset.copy().offset(-RobotConstants.armOffset);
 		armVel = armPositioner.getSpeedInput().scale(RobotConstants.armSprocketRatio).mapToAngle(Speed.class);
 
-		gearIntakeCurrent = pdp.getCurrentIn(13);
 		gearBeamBreak = gearSensor.getSwitchInput();
-		flCurrent = frontLeft.getCurrentIn();
-		frCurrent = frontRight.getCurrentIn();
-		blCurrent = rearLeft.getCurrentIn();
-		brCurrent = rearRight.getCurrentIn();
-		armCurrent = armPositioner.getCurrentIn();
+
 
 		climberVoltage = climberA.getVoltageOutput().addFollowers(climberB.getVoltageOutput())
 				.addFollowers(climberC.getVoltageOutput());
