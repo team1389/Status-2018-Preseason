@@ -15,7 +15,8 @@ public class RobotLayout extends RobotMap
 	public CANTalonHardware frontLeft, frontRight, rearLeft, rearRight, armPositioner;
 	public VictorHardware climberA, climberB, climberC, gearIntake;
 	public PDPHardware pdp;
-	public DoubleSolenoidHardware driveFLPiston, driveBLPiston, driveFRPiston, driveBRPiston;
+	public DoubleSolenoidHardware driveFLPiston, driveBLPiston, driveFRPiston, driveBRPiston,
+			dumperRPiston, dumperLPiston;
 	public CANLightHardware light;
 	public SpartanGyro gyro;
 	public SwitchHardware gearSensor;
