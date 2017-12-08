@@ -2,7 +2,7 @@
 
 <project name="FRC Deployment" default="deploy">
 
-  <!--
+	<!--
   The following properties can be defined to override system level
   settings. These should not be touched unless you know what you're
   doing. The primary use is to override the wpilib version when
@@ -10,21 +10,129 @@
   libraries.
   -->
 
-  <!-- By default the system version of WPI is used -->
-  <!-- <property name="version" value=""/> -->
+	<!-- By default the system version of WPI is used -->
+	<!-- <property name="version" value=""/> -->
 
-  <!-- By default the system team number is used -->
-  <!-- <property name="team-number" value=""/> -->
+	<!-- By default the system team number is used -->
+	<!-- <property name="team-number" value=""/> -->
 
-  <!-- By default the target is set to 10.TE.AM.2 -->
-  <!-- <property name="target" value=""/> -->
+	<!-- By default the target is set to 10.TE.AM.2 -->
+	<!-- <property name="target" value=""/> -->
 
-  <!-- Any other property in build.properties can also be overridden. -->
+	<!-- Any other property in build.properties can also be overridden. -->
 
-  <property file="${user.home}/wpilib/wpilib.properties"/>
-  <property file="build.properties"/>
-  <property file="${user.home}/wpilib/java/${version}/ant/build.properties"/>
+	<property file="${user.home}/wpilib/wpilib.properties" />
+	<property file="build.properties" />
+	<property file="${user.home}/wpilib/java/${version}/ant/build.properties" />
+	<xmlproperty file=".classpath" collapseAttributes="true" delimiter=";" />
+	<path id="eclipse.classpath">
+		<pathelement path="${classpath.classpathentry.path}" />
+	</path>
+	<import file="${wpilib.ant.dir}/build.xml" />
+	<target name="jar" depends="compile">
+		<echo>[athena-jar] Making jar ${dist.jar}.</echo>
+		<mkdir dir="${dist.dir}" />
+		<mkdir dir="${build.jars}" />
 
-  <import file="${wpilib.ant.dir}/build.xml"/>
+		<echo>[athena-jar] Copying jars to ${build.jars}.</echo>
+		<copy todir="${build.jars}" flatten="true">
+			<path refid="classpath.path" />
+		</copy>
 
+		<jar destfile="${dist.jar}" update="false">
+			<manifest>
+				<attribute name="Main-Class" value="edu.wpi.first.wpilibj.RobotBase" />
+				<attribute name="Robot-Class" value="${robot.class}" />
+				<attribute name="Class-Path" value="." />
+			</manifest>
+
+			<fileset dir="${build.dir}" includes="**/*.class" />
+
+			<zipgroupfileset dir="${build.jars}" />
+		</jar>
+	</target>
+	<target name="compile" description="Compile the source code.">
+		<mkdir dir="${build.dir}" />
+		<jar basedir="${teambase}/bin/" destfile="export/test.jar">
+		</jar>
+		<path id="classpath.path">
+			<fileset dir="${userLibs.dir}" includes="*.jar" />
+			<fileset file="${wpilib.jar}" />
+			<fileset file="${networktables.jar}" />
+			<fileset file="${opencv.jar}" />
+			<fileset file="${cscore.jar}" />
+			<fileset file="export/test.jar" />
+			<fileset dir="${teambase}/lib/" includes="*.jar" />
+			<fileset dir="${userLibs}" erroronmissingdir="false" />
+		</path>
+
+		<pathconvert property="classpathProp" refid="classpath.path" />
+		<echo>[athena-compile] Compiling ${src.dir} with classpath=${classpathProp} to ${build.dir}</echo>
+
+		<javac srcdir="${src.dir}" destdir="${build.dir}" includeAntRuntime="no" includeJavaRuntime="no" classpathref="classpath.path" target="${ant.java.version}" source="${ant.java.version}" compiler="javac${ant.java.version}" debug="true">
+		</javac>
+	</target>
+	<target name="deploy" depends="clean,jar,get-target-ip,dependencies" description="Deploy the jar and start the program running.">
+
+		<deploy-libs libs.name="WPI_Native_Libraries" libs.basedir="${wpilib.native.lib}" libs.deployDir="${libDeploy.dir}">
+			<libs.local>
+				<fileset id="wpiNativeLibs.local" dir="${wpilib.native.lib}">
+					<include name="libHALAthena.so" />
+					<include name="libntcore.so" />
+					<include name="libwpiutil.so" />
+					<include name="libopencv*.so.3.1" />
+					<include name="libcscore.so" />
+					<include name="libopencv_java310.so" />
+					<include name="libwpilibJavaJNI.so" />
+
+				</fileset>
+			</libs.local>
+		</deploy-libs>
+
+		<deploy-libs libs.name="User_Libraries" libs.basedir="${userLibs.dir}" libs.deployDir="${libDeploy.dir}">
+			<libs.local>
+				<fileset dir="${userLibs.dir}">
+					<include name="**/*.so" />
+				</fileset>
+			</libs.local>
+		</deploy-libs>
+		<echo>[athena-deploy] ${libDeploy.dir}.</echo>
+		<echo>[athena-deploy] ${username}@${target}:${deploy.dir}.</echo>
+		<echo>[athena-deploy] Copying code over.</echo>
+		<!-- Team 1389 -->
+		<scp todir="${adminUsername}@${target}:${libDeploy.dir}" password="${password}" trust="true" >
+			<fileset dir="${teambase}/lib/native">
+				<include name="**/*.so" />
+			</fileset>
+		</scp>
+		<scp file="${dist.jar}" todir="${username}@${target}:${deploy.dir}" password="${password}" trust="true" />
+		<sshexec host="${target}" username="${adminUsername}" password="${password}" trust="true" command="mkdir -p ../../paths" />
+		<scp todir="${adminUsername}@${target}:/paths" password="${password}" trust="true">
+			<fileset dir="paths">
+				<include name="**/*.csv" />
+			</fileset>
+		</scp>
+
+
+		<sshexec host="${target}" username="${adminUsername}" password="${password}" trust="true" command="ldconfig" />
+
+		<!-- Suppress the exit status so that if no netconsole was running then
+	          it doesn't show up red on the output. -->
+		<sshexec host="${target}" username="admin" password="${password}" trust="true" failonerror="false" command="killall -q netconsole-host || :" />
+
+		<deploy-libs libs.name="netconsole-host" libs.basedir="${wpilib.ant.dir}" libs.deployDir="/usr/local/frc/bin">
+			<libs.local>
+				<fileset id="netconsole.local" dir="${wpilib.ant.dir}">
+					<include name="netconsole-host" />
+				</fileset>
+			</libs.local>
+		</deploy-libs>
+
+		<scp file="${wpilib.ant.dir}/robotCommand" todir="${username}@${target}:${command.dir}" password="${password}" trust="true" />
+
+		<echo>[athena-deploy] Starting program.</echo>
+		<sshexec host="${target}" username="${username}" password="${password}" trust="true" failonerror="false" command="${deploy.kill.command};" />
+
+		<sshexec host="${target}" username="${username}" password="${password}" trust="true" command="sync" />
+	</target>
 </project>
