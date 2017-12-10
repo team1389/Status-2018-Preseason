@@ -1,19 +1,14 @@
 package org.usfirst.frc.team1389.systems;
 
+import com.team1389.command_framework.CommandUtil;
+import com.team1389.command_framework.command_base.Command;
 import com.team1389.hardware.inputs.software.DigitalIn;
 import com.team1389.hardware.outputs.software.DigitalOut;
 import com.team1389.system.Subsystem;
 import com.team1389.util.list.AddList;
 import com.team1389.watch.Watchable;
 
-/*
- * need one button for toggling hopper, one stream representing both solenoids
- * probably want states so that auto can figure out what to do 
- * Question: Do we want related commands in here, or in another AutoCommands class?
- * In terms of ease of use during competition, having all commands in AutoCommands class seems nice, but would be a super bloated class
- * for now, going to have command(s) in here, can change this later
- * does true on a digitalOut off a Solenoid mean extended or retracted? For now, working off assumption that true = extended
- */
+
 public class HopperSystem extends Subsystem
 {
 	DigitalIn toggleHopper;
@@ -22,8 +17,10 @@ public class HopperSystem extends Subsystem
 
 	/**
 	 * 
-	 * @param toggleHopper assumed to be latched
-	 * @param solenoids all streams representing hopper pistons
+	 * @param toggleHopper
+	 *            assumed to be latched
+	 * @param solenoids
+	 *            all streams representing hopper pistons
 	 */
 	public HopperSystem(DigitalIn toggleHopper, DigitalOut solenoids)
 	{
@@ -50,32 +47,61 @@ public class HopperSystem extends Subsystem
 	public void init()
 	{
 		state = HopperState.DOWN;
-		
+
 	}
 
 	@Override
 	public void update()
 	{
-		
-		solenoids.set(state.extended);
-
+		state.retracted = ((toggleHopper.get() ^ state.retracted) ? true : false);
+		solenoids.set(state.retracted);
 	}
 
 	/**
-	 * represents State, all changes to Piston orientation should be done
-	 * through HopperState
+	 * represents State, all changes to Piston orientation are done through
+	 * HopperState. Note that stored boolean is whether the pistons are
+	 * retracted.
 	 * 
 	 * @author Quunii
 	 *
 	 */
 	private enum HopperState
 	{
-		UP(false), DOWN(true);
-		private boolean extended;
+		UP(true), DOWN(false);
+		private boolean retracted;
 
-		private HopperState(boolean extended)
+		private HopperState(boolean retracted)
 		{
-			this.extended = extended;
+			this.retracted = retracted;
 		}
+	}
+
+	// TODO: Decide whether to keep these commands seperate or not, as they
+	// could be one command
+	/**
+	 * 
+	 * @return Command that retracts pistons and dumps
+	 */
+	public Command getDumpCommand()
+	{
+		return CommandUtil.createCommand(() ->
+		{
+			state.retracted = true;
+			solenoids.set(state.retracted);
+		});
+	}
+
+	/**
+	 * 
+	 * @return Command that extends pistons and resets hopper to allow taking in
+	 *         balls
+	 */
+	public Command getResetHopperCommand()
+	{
+		return CommandUtil.createCommand(() ->
+		{
+			state.retracted = false;
+			solenoids.set(state.retracted);
+		});
 	}
 }
