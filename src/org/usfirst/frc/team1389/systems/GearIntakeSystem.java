@@ -37,6 +37,7 @@ public class GearIntakeSystem extends Subsystem
 
 	@Override
 	public String getName()
+	
 	{
 		// TODO Auto-generated method stub
 		return null;
