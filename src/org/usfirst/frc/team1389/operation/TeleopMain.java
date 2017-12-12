@@ -29,9 +29,11 @@ public class TeleopMain
 
 	public void init()
 	{
+		controls = ControlBoard.getInstance();
 		OctoMecanumSystem drive = setUpDrive();
 		ClimberSystem climb = setUpClimber();
 		HopperSystem hopper = setUpHopper();
+		manager = new SystemManager(drive, climb, hopper);
 	}
 
 	private OctoMecanumSystem setUpDrive()
@@ -47,9 +49,13 @@ public class TeleopMain
 		return new ClimberSystem(controls.leftTrigger(), robot.climberVoltage);
 	}
 
-	private HopperSystem setUpHopper()
+	private HopperSystem setUpHopper() 
 	{
 		return new HopperSystem(controls.upDPad(),
 				robot.dumperLPiston.getDigitalOut().addFollowers(robot.dumperRPiston.getDigitalOut()));
+	}
+	public void update()
+	{
+		manager.update();
 	}
 }
