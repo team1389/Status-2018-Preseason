@@ -53,17 +53,7 @@ public class TeleopGearIntakeSystem extends Subsystem
 	@Override
 	public void update()
 	{
-		armVoltage.set(armAxis.get());
-		intakeRunning = intakeButton.get()^intakeRunning;
-		outtakeRunning = outtakeButton.get()^ outtakeRunning;
-		if(!intakeRunning)
-		{
-			intakeVoltage.set((outtakeRunning)? -1:0);
-		}
-		else
-		{
-			intakeVoltage.set(1);
-		}
+		
 	}
 
 }
