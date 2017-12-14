@@ -18,6 +18,7 @@ public class TeleopGearIntakeSystem extends GearIntakeSystem
 	DigitalIn allignButton;
 	DigitalIn placeButton;
 	DigitalIn manualButton;
+	DigitalIn beamBreak;
 	SmoothSetController armPositionPID;
 
 	boolean intakeRunning;
@@ -27,9 +28,9 @@ public class TeleopGearIntakeSystem extends GearIntakeSystem
 	public TeleopGearIntakeSystem(RangeOut<Percent> intakeVoltage, RangeOut<Percent> armVoltage,
 			SmoothSetController armPositionPID, RangeIn<Percent> armAxis, DigitalIn intakeButton,
 			DigitalIn outtakeButton, DigitalIn carryButton, DigitalIn allignButton, DigitalIn placeButton,
-			DigitalIn manualButton)
+			DigitalIn manualButton, DigitalIn beamBreak)
 	{
-		super(intakeVoltage, armVoltage, armPositionPID);
+		super(intakeVoltage, armVoltage, beamBreak, armPositionPID);
 
 		this.armAxis = armAxis;
 		this.intakeButton = intakeButton;
