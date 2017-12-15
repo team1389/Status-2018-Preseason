@@ -1,10 +1,7 @@
 package org.usfirst.frc.team1389.robot;
 
-import java.util.function.Function;
-
 import com.team1389.hardware.inputs.software.AngleIn;
 import com.team1389.hardware.inputs.software.DigitalIn;
-import com.team1389.hardware.inputs.software.PositionEncoderIn;
 import com.team1389.hardware.inputs.software.RangeIn;
 import com.team1389.hardware.outputs.software.DigitalOut;
 import com.team1389.hardware.outputs.software.PercentOut;
@@ -31,6 +28,8 @@ public class RobotSoftware extends RobotHardware
 	public RangeIn<Value> armCurrent;
 	public DigitalIn gearBeamBreak;
 	public PercentOut climberVoltage;
+	public PercentOut intakeVoltage;
+	public PercentOut armVoltage;
 
 	public static RobotSoftware getInstance()
 	{
@@ -39,26 +38,29 @@ public class RobotSoftware extends RobotHardware
 
 	public RobotSoftware()
 	{
+
+		//MISC
+		gyroInput = gyro.getAngleInput();
+		
+		//DRIVE
 		voltageDrive = new FourDriveOut<>(frontLeft.getVoltageOutput(), frontRight.getVoltageOutput(),
 				rearLeft.getVoltageOutput(), rearRight.getVoltageOutput());
 		compensatedDrive = new FourDriveOut<>(frontLeft.getCompensatedVoltageOut(),
 				frontRight.getCompensatedVoltageOut(), rearLeft.getCompensatedVoltageOut(),
 				rearRight.getCompensatedVoltageOut());
-		
-		gyroInput = gyro.getAngleInput();
-
 		pistons = driveFLPiston.getDigitalOut().addFollowers(driveFRPiston.getDigitalOut(), driveBLPiston.getDigitalOut(),
 				driveBRPiston.getDigitalOut());
-
+		
+		//ARM
 		armAngleNoOffset = armPositioner.getAbsoluteIn().mapToAngle(Position.class).invert()
 				.scale(RobotConstants.armSprocketRatio);
-		
 		armAngle = armAngleNoOffset.copy().offset(-RobotConstants.armOffset);
 		armVel = armPositioner.getSpeedInput().scale(RobotConstants.armSprocketRatio).mapToAngle(Speed.class);
-
 		gearBeamBreak = gearSensor.getSwitchInput();
+		armVoltage = armPositioner.getVoltageOutput();
+		intakeVoltage = gearIntake.getVoltageOutput();
 
-
+		
 		climberVoltage = climberA.getVoltageOutput().addFollowers(climberB.getVoltageOutput())
 				.addFollowers(climberC.getVoltageOutput());
 	}

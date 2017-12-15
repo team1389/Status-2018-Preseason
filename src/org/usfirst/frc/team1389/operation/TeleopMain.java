@@ -1,9 +1,12 @@
 package org.usfirst.frc.team1389.operation;
 
+import org.usfirst.frc.team1389.robot.RobotConstants;
 import org.usfirst.frc.team1389.robot.RobotSoftware;
 import org.usfirst.frc.team1389.systems.ClimberSystem;
 import org.usfirst.frc.team1389.systems.HopperSystem;
+import org.usfirst.frc.team1389.systems.TeleopGearIntakeSystem;
 
+import com.team1389.control.SmoothSetController;
 import com.team1389.hardware.controls.ControlBoard;
 import com.team1389.system.SystemManager;
 import com.team1389.system.drive.OctoMecanumSystem;
@@ -17,8 +20,8 @@ public class TeleopMain
 	/**
 	 * 
 	 * Notice no DigitalIn to represent time TODO use
-	 * https://frcevents2.docs.apiary.io/# to figure out how we're going to do that
-	 * next season
+	 * https://frcevents2.docs.apiary.io/# to figure out how we're going to do
+	 * that next season
 	 * 
 	 */
 
@@ -33,7 +36,8 @@ public class TeleopMain
 		OctoMecanumSystem drive = setUpDrive();
 		ClimberSystem climb = setUpClimber();
 		HopperSystem hopper = setUpHopper();
-		manager = new SystemManager(drive, climb, hopper);
+		TeleopGearIntakeSystem gearIntake = setUpGearIntakeSystem();
+		manager = new SystemManager(drive, climb, hopper, gearIntake);
 	}
 
 	private OctoMecanumSystem setUpDrive()
@@ -49,11 +53,27 @@ public class TeleopMain
 		return new ClimberSystem(controls.leftTrigger(), robot.climberVoltage);
 	}
 
-	private HopperSystem setUpHopper() 
+	private HopperSystem setUpHopper()
 	{
 		return new HopperSystem(controls.upDPad(),
 				robot.dumperLPiston.getDigitalOut().addFollowers(robot.dumperRPiston.getDigitalOut()));
 	}
+
+	/*
+	 * RangeOut<Percent> intakeVoltage, RangeOut<Percent> armVoltage,
+	 * SmoothSetController armPositionPID, RangeIn<Percent> armAxis, DigitalIn
+	 * intakeButton, DigitalIn outtakeButton, DigitalIn carryButton, DigitalIn
+	 * allignButton, DigitalIn placeButton, DigitalIn manualButton, DigitalIn
+	 * beamBreak
+	 */
+	private TeleopGearIntakeSystem setUpGearIntakeSystem()
+	{
+		//kinda want to practice tuning PID 
+		
+		return new TeleopGearIntakeSystem(robot.intakeVoltage, robot.armVoltage, new SmoothSetController(0.1, 0, 0, 0, RobotConstants.MaxAcceleration, RobotConstants.MaxDeceleration, RobotConstants.MaxVelocity, robot.armAngle, robot.armVel, robot.armVoltage), controls.leftStickYAxis(), controls.leftBumper(), controls.rightBumper(), controls.aButton(), controls.bButton(), controls.xButton(),
+				controls.yButton(), robot.gearBeamBreak);
+	}
+
 	public void update()
 	{
 		manager.update();
