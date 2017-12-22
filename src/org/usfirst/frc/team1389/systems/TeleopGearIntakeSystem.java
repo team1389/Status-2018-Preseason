@@ -7,10 +7,10 @@ import com.team1389.hardware.outputs.software.RangeOut;
 import com.team1389.hardware.value_types.Percent;
 import com.team1389.util.list.AddList;
 import com.team1389.watch.Watchable;
+import com.team1389.watch.info.NumberInfo;
 
 public class TeleopGearIntakeSystem extends GearIntakeSystem
 {
-	RangeOut<Percent> intakeVoltage, armVoltage;
 	RangeIn<Percent> armAxis;
 	DigitalIn intakeButton;
 	DigitalIn outtakeButton;
@@ -18,12 +18,10 @@ public class TeleopGearIntakeSystem extends GearIntakeSystem
 	DigitalIn allignButton;
 	DigitalIn placeButton;
 	DigitalIn manualButton;
-	DigitalIn beamBreak;
-	SmoothSetController armPositionPID;
 
 	boolean intakeRunning;
 	boolean outtakeRunning;
-	boolean manualMode;
+	boolean manualMode = false;
 
 	public TeleopGearIntakeSystem(RangeOut<Percent> intakeVoltage, RangeOut<Percent> armVoltage,
 			SmoothSetController armPositionPID, RangeIn<Percent> armAxis, DigitalIn intakeButton,
@@ -44,9 +42,11 @@ public class TeleopGearIntakeSystem extends GearIntakeSystem
 	@Override
 	public AddList<Watchable> getSubWatchables(AddList<Watchable> stem)
 	{
-		return stem.put(intakeVoltage.getWatchable("intake Voltage Set"), armVoltage.getWatchable("arm Voltage Set"),
-				armAxis.getWatchable("arm axis"), intakeButton.getWatchable("intake Button"),
-				outtakeButton.getWatchable("outtake button"));
+		return stem.put(intakeVoltage.getWatchable("intake voltage set"), armVoltage.getWatchable("arm Voltage Set"),
+				pid.getSource().getWatchable("arm angle"), intakeButton.getWatchable("intake Button"),
+				outtakeButton.getWatchable("outtake button"), 
+				new NumberInfo(("setpoint"), () -> pid.getSetpoint()),
+				new NumberInfo(("error"), () -> pid.getError()));
 
 	}
 
@@ -72,16 +72,19 @@ public class TeleopGearIntakeSystem extends GearIntakeSystem
 		}
 		if (manualMode)
 		{
-			updateManual();
+			System.out.println("xxxxxxxxxxxxxxxxxxxxTeleopGearIntake: in manual modexxxxxxxxxxxxxxxxxxxxxxxxxxx");
+			// TODO Fix update manual, crashes program
+			// updateManual();
 		} else
 		{
 			updateAuto();
+			pid.update();
 		}
 	}
 
 	private void updateManual()
 	{
-		armVoltage.set(armAxis.get());
+		armVoltage.set(1);
 		intakeRunning = intakeButton.get() ^ intakeRunning;
 		outtakeRunning = outtakeButton.get() ^ outtakeRunning;
 
@@ -101,6 +104,7 @@ public class TeleopGearIntakeSystem extends GearIntakeSystem
 	{
 		if (carryButton.get())
 		{
+	
 			moveArm(State.Carrying);
 		}
 		if (allignButton.get())
@@ -113,6 +117,7 @@ public class TeleopGearIntakeSystem extends GearIntakeSystem
 		}
 		if (intakeButton.get())
 		{
+			System.out.println("aaaaaaaaaaaaaaaaaaaa");
 			moveArm(State.Intaking);
 		}
 	}

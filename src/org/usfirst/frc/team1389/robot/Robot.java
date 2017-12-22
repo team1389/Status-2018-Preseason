@@ -1,6 +1,9 @@
 package org.usfirst.frc.team1389.robot;
 
+import org.usfirst.frc.team1389.DebugDash;
 import org.usfirst.frc.team1389.operation.TeleopMain;
+
+import com.team1389.hardware.controls.ControlBoard;
 
 import edu.wpi.first.wpilibj.IterativeRobot;
 
@@ -25,6 +28,7 @@ public class Robot extends IterativeRobot
 		robot = RobotSoftware.getInstance();
 		teleOperator = new TeleopMain(robot);
 		teleOperator.init();
+		DebugDash.getInstance().outputToDashboard();
 	}
 
 	/**
@@ -59,9 +63,14 @@ public class Robot extends IterativeRobot
 	@Override
 	public void teleopPeriodic()
 	{
+		DebugDash.getInstance().update();
 		teleOperator.update();
 	}
-
+	@Override
+	public void disabledPeriodic()
+	{
+		DebugDash.getInstance().update();
+	}
 	/**
 	 * This function is called periodically during test mode
 	 */

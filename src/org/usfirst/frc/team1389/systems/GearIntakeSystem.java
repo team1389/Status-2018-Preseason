@@ -1,6 +1,8 @@
 package org.usfirst.frc.team1389.systems;
 
+import com.team1389.control.PIDController;
 import com.team1389.control.SmoothSetController;
+import com.team1389.control.SynchronousPIDController;
 import com.team1389.hardware.inputs.software.DigitalIn;
 import com.team1389.hardware.outputs.software.RangeOut;
 import com.team1389.hardware.value_types.Percent;
@@ -17,18 +19,18 @@ public class GearIntakeSystem extends Subsystem
 	private final double CARRYING = 100;
 	private final double INTAKING = -37;
 	private State currentState;
-
 	DigitalIn beamBreak;
 	RangeOut<Percent> intakeVoltage, armVoltage;
-	SmoothSetController armPositionPID;
+	SmoothSetController pid;
 
 	public GearIntakeSystem(RangeOut<Percent> intakeVoltage, RangeOut<Percent> armVoltage, DigitalIn beamBreak,
 			SmoothSetController armPositionPID)
 	{
+
 		this.intakeVoltage = intakeVoltage;
 		this.armVoltage = armVoltage;
 		this.beamBreak = beamBreak;
-		this.armPositionPID = armPositionPID;
+		pid= armPositionPID;
 
 	}
 
@@ -42,19 +44,22 @@ public class GearIntakeSystem extends Subsystem
 		switch (desiredState)
 		{
 		case Intaking:
-			armPositionPID.setSetpoint(INTAKING);
+			pid.setSetpoint(INTAKING);
+		
+
 			currentState = State.Intaking;
 			break;
 		case Alligning:
-			armPositionPID.setSetpoint(ALLIGNING);
+			pid.setSetpoint(ALLIGNING);
+
 			currentState = State.Alligning;
 			break;
 		case Placing:
-			armPositionPID.setSetpoint(PLACING);
+			pid.setSetpoint(PLACING);
 			currentState = State.Placing;
 			break;
 		case Carrying:
-			armPositionPID.setSetpoint(CARRYING);
+			pid.setSetpoint(CARRYING);
 			currentState = State.Carrying;
 			break;
 		}
@@ -63,8 +68,9 @@ public class GearIntakeSystem extends Subsystem
 	@Override
 	public AddList<Watchable> getSubWatchables(AddList<Watchable> stem)
 	{
-		//not really sure if this is how EnumInfo should be set up, test to make sure
-		return stem.put(new EnumInfo("State", ()-> currentState), beamBreak.getWatchable("sensor_beam-break"));
+		// not really sure if this is how EnumInfo should be set up, test to
+		// make sure
+		return stem.put(new EnumInfo("State", () -> currentState), beamBreak.getWatchable("sensor_beam-break"));
 	}
 
 	@Override
@@ -76,27 +82,29 @@ public class GearIntakeSystem extends Subsystem
 	@Override
 	public void init()
 	{
-		armPositionPID.enable();
+		pid.enable();
 	}
 
+	//keep in mind all of this gets overwrote in teleopGearIntake
 	@Override
 	public void update()
 	{
+
 		if (currentState == State.Intaking && !beamBreak.get())
 		{
 			intakeVoltage.set(1);
 		}
-		// Tolerance may be too low, will be tuned until its realistic
+		// Tolerance may be too low, will be tuneduntil its realistic
 		// only outtaking when beamBreak is procced may mean not enough distance
 		// on the gear
-		else if (currentState == State.Placing && armPositionPID.onTargetStable(1) && beamBreak.get())
+		else if (currentState == State.Placing && beamBreak.get())
 		{
 			intakeVoltage.set(-1);
 		} else
 		{
 			intakeVoltage.set(0);
 		}
-		armPositionPID.update();
+
 	}
 
 }

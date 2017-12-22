@@ -1,11 +1,13 @@
 package org.usfirst.frc.team1389.operation;
 
+import org.usfirst.frc.team1389.DebugDash;
 import org.usfirst.frc.team1389.robot.RobotConstants;
 import org.usfirst.frc.team1389.robot.RobotSoftware;
 import org.usfirst.frc.team1389.systems.ClimberSystem;
 import org.usfirst.frc.team1389.systems.HopperSystem;
 import org.usfirst.frc.team1389.systems.TeleopGearIntakeSystem;
 
+import com.team1389.configuration.PIDConstants;
 import com.team1389.control.SmoothSetController;
 import com.team1389.hardware.controls.ControlBoard;
 import com.team1389.system.SystemManager;
@@ -37,6 +39,7 @@ public class TeleopMain
 		ClimberSystem climb = setUpClimber();
 		HopperSystem hopper = setUpHopper();
 		TeleopGearIntakeSystem gearIntake = setUpGearIntakeSystem();
+		DebugDash.getInstance().watch(gearIntake);
 		manager = new SystemManager(drive, climb, hopper, gearIntake);
 	}
 
@@ -68,10 +71,13 @@ public class TeleopMain
 	 */
 	private TeleopGearIntakeSystem setUpGearIntakeSystem()
 	{
-		//kinda want to practice tuning PID 
-		
-		return new TeleopGearIntakeSystem(robot.intakeVoltage, robot.armVoltage, new SmoothSetController(0.1, 0, 0, 0, RobotConstants.MaxAcceleration, RobotConstants.MaxDeceleration, RobotConstants.MaxVelocity, robot.armAngle, robot.armVel, robot.armVoltage), controls.leftStickYAxis(), controls.leftBumper(), controls.rightBumper(), controls.aButton(), controls.bButton(), controls.xButton(),
-				controls.yButton(), robot.gearBeamBreak);
+		// kinda want to practice tuning PID
+//idea: define what each button is supposed to be on so coders dont have to trace back to here
+		return new TeleopGearIntakeSystem(robot.intakeVoltage, robot.armVoltage,
+				new SmoothSetController(new PIDConstants(.03, 0, .0), 800, 800, 500, robot.armAngle, robot.armVel,
+						robot.armVoltage),
+				controls.leftStickYAxis(), controls.aButton(), controls.rightBumper(), controls.yButton(),
+				controls.bButton(), controls.xButton(), controls.startButton(), robot.gearBeamBreak);
 	}
 
 	public void update()
